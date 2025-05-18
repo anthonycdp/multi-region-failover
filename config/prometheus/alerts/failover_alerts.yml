@@ -1,0 +1,113 @@
+groups:
+  - name: multi_region_failover_alerts
+    interval: 10s
+    rules:
+      # Critical: Region is down
+      - alert: RegionDown
+        expr: service_healthy == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Region {{ $labels.region }} is down"
+          description: "Region {{ $labels.region }} has been unhealthy for more than 15 seconds."
+
+      # Warning: High latency
+      - alert: HighLatency
+        expr: service_latency_ms > 500
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency on {{ $labels.region }}"
+          description: "Region {{ $labels.region }} has latency > 500ms (current: {{ $value }}ms)"
+
+      # Critical: Very high latency
+      - alert: VeryHighLatency
+        expr: service_latency_ms > 2000
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical latency on {{ $labels.region }}"
+          description: "Region {{ $labels.region }} has latency > 2000ms (current: {{ $value }}ms)"
+
+      # Warning: High CPU usage
+      - alert: HighCPUUsage
+        expr: service_cpu_usage > 80
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.region }}"
+          description: "Region {{ $labels.region }} CPU usage is {{ $value }}%"
+
+      # Critical: Critical CPU usage
+      - alert: CriticalCPUUsage
+        expr: service_cpu_usage > 90
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical CPU usage on {{ $labels.region }}"
+          description: "Region {{ $labels.region }} CPU usage is {{ $value }}%"
+
+      # Warning: High memory usage
+      - alert: HighMemoryUsage
+        expr: service_memory_usage > 85
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.region }}"
+          description: "Region {{ $labels.region }} memory usage is {{ $value }}%"
+
+      # Warning: Replication lag
+      - alert: ReplicationLag
+        expr: service_replication_lag_ms > 1000
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Replication lag on {{ $labels.region }}"
+          description: "Region {{ $labels.region }} replication lag is {{ $value }}ms"
+
+      # Critical: High replication lag
+      - alert: HighReplicationLag
+        expr: service_replication_lag_ms > 5000
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical replication lag on {{ $labels.region }}"
+          description: "Region {{ $labels.region }} replication lag is {{ $value }}ms"
+
+      # Info: Primary region switch
+      - alert: PrimaryRegionDown
+        expr: service_healthy{role="primary"} == 0
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Primary region is down - failover expected"
+          description: "Primary region {{ $labels.region }} is down. Automatic failover should occur."
+
+      # Warning: Multiple regions down
+      - alert: MultipleRegionsDown
+        expr: count(service_healthy == 0) >= 2
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Multiple regions are down"
+          description: "{{ $value }} regions are currently down. System is in degraded state."
+
+      # Critical: All regions down
+      - alert: AllRegionsDown
+        expr: count(service_healthy == 0) == count(service_healthy)
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "All regions are down - complete outage"
+          description: "All regions are unhealthy. Complete system outage!"

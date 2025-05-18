@@ -1,0 +1,65 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+  external_labels:
+    monitor: 'multi-region-failover'
+    environment: 'demo'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files:
+  - /etc/prometheus/alerts/*.yml
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Multi-region services
+  - job_name: 'region-us-east'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['us-east-service:8000']
+        labels:
+          region: 'us-east-1'
+          role: 'primary'
+          priority: '1'
+
+  - job_name: 'region-eu-west'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['eu-west-service:8000']
+        labels:
+          region: 'eu-west-1'
+          role: 'secondary'
+          priority: '2'
+
+  - job_name: 'region-ap-southeast'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['ap-southeast-service:8000']
+        labels:
+          region: 'ap-southeast-1'
+          role: 'secondary'
+          priority: '3'
+
+  # Load balancer metrics
+  - job_name: 'load-balancer'
+    metrics_path: '/lb/metrics'
+    static_configs:
+      - targets: ['load-balancer:9000']
+        labels:
+          service: 'load-balancer'
+
+  # Health monitor
+  - job_name: 'health-monitor'
+    static_configs:
+      - targets: ['health-monitor:8080']
+        labels:
+          service: 'health-monitor'
